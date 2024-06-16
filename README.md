@@ -2,6 +2,12 @@
 
 yaml内で変数や計算式を扱えるようにしたもの
 
+## How to install
+
+```
+>> pip install yamlx
+```
+
 ## How to use
 
 存在しているキーの値を代入したいとき　->  \${key1.key2.key3 ...}
