@@ -1,8 +1,12 @@
 import re
 import pyparsing
+from omegaconf import DictConfig
 
 from pyparsing import Word, Keyword, Suppress, Group, ZeroOrMore, Regex
 from pyparsing import alphanums, infix_notation, oneOf, opAssoc
+
+#パース可能な辞書型
+DICT_TYPES = [dict, DictConfig]
 
 # 計算可能な演算子
 OPERATORS = ["+", "-", "*", "/", "//", "**"]
@@ -36,7 +40,7 @@ expression = infix_notation(
 # -----------------------------------------------------------------------------
 
 
-def parse(input_dict: dict):
+def parse(input_dict: dict | DictConfig):
     """
     yamlとしてデシリアライズした辞書型データを解析
     ${...}で指定されている変数部と計算式部を変換していく
@@ -51,8 +55,9 @@ def parse(input_dict: dict):
         new_dict = {}
 
         for k, v in target_value.items():
+
             # ネストしているとき-------------------------
-            if type(v) == dict:
+            if type(v) in DICT_TYPES:
                 new_dict[k] = parse_dict_recursive(original_dict, v)
                 continue
 

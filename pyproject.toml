@@ -8,6 +8,7 @@ authors = [
 dependencies = [
     "pyyaml>=6.0.1",
     "pyparsing>=3.1.2",
+    "omegaconf>=2.3.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

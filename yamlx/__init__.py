@@ -1,9 +1,7 @@
 import yaml
-import errno
 import os
 
 from parser import parse
-
 
 def load(path: str):
     """
@@ -52,13 +50,21 @@ def load(path: str):
         raise SyntaxError(e)
 
     # 解析 -------------------------------------------
-    dict_vaml = parse(dict_from_yaml)
+    dict_yamlx = parse(dict_from_yaml)
 
-    return dict_vaml
+    return dict_yamlx
 
 
 if __name__ == "__main__":
-    p = "./example.vaml"
-    d = load(p)
 
+    print("load ymx file")
+    p = "./example.ymx"
+    d = load(p)
+    print(d)
+
+    print("------------------------------")
+    print("load ymx file by OmegaConf and parse")
+    from omegaconf import OmegaConf
+    d = OmegaConf.load(p)
+    d = parse(d)
     print(d)
