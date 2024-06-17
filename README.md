@@ -38,7 +38,7 @@ model :
 ```
 >> import yamlx
 >> path = "./example.ymx"
->> data = vaml.load(path)
+>> data = yamlx.load(path)
 >> print(data)
 >> {'train': {'batch_size': 16, 'learning_rate': 0.001, 'epochs': 50}, 'signal': {'sample_rate': 16000, 'hop_size': 256, 'n_mels': 80, 'eps': 0.01, 'max_len': 62.0}, 'model': {'input_dim': 128, 'input_channel': 80, 'output_channel': 5}}  
 ```

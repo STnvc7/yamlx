@@ -1,6 +1,6 @@
 import re
 import pyparsing
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from pyparsing import Word, Keyword, Suppress, Group, ZeroOrMore, Regex
 from pyparsing import alphanums, infix_notation, oneOf, opAssoc
@@ -11,7 +11,7 @@ DICT_TYPES = [dict, DictConfig]
 # 計算可能な演算子
 OPERATORS = ["+", "-", "*", "/", "//", "**"]
 
-# 単項演算子，二項演算子，三項演算子
+# 単項演算，二項演算
 UNARY, BINARY = 1, 2
 
 # 構文規則 --------------------------------------------------------------------
@@ -21,7 +21,6 @@ VAR = Keyword("$")
 POINT = Suppress(".")
 LBRACE = Suppress("{")
 RBRACE = Suppress("}")
-POINT = Suppress(".")
 
 ident = Word(alphanums + "-" + "_")
 number = Regex(r"\d+(\.\d*)?([eE][+-]?\d+)?")
@@ -33,14 +32,14 @@ expression = infix_notation(
     factor,
     [
         (oneOf("+ -"), UNARY, opAssoc.RIGHT),  # 符号は最優先。
-        (oneOf("* / // ^"), BINARY, opAssoc.LEFT),  # 掛け算割り算は足し算引き算より優先
+        (oneOf("* / // **"), BINARY, opAssoc.LEFT),  # 掛け算割り算は足し算引き算より優先
         (oneOf("+ -"), BINARY, opAssoc.LEFT),
     ],
 )
 # -----------------------------------------------------------------------------
 
 
-def parse(input_dict: dict | DictConfig):
+def parse(input_dict):
     """
     yamlとしてデシリアライズした辞書型データを解析
     ${...}で指定されている変数部と計算式部を変換していく
@@ -86,7 +85,7 @@ def has_expression(value: any):
 
     if type(value) != str:
         return False
-    if re.search(r".*[ |\$].*", value):
+    if re.search(r".*[{}|\$].*".format('|'.join(OPERATORS)), value):
         return True
     else:
         return False
@@ -153,9 +152,9 @@ def get_value_from_key_list(data: dict, k_list: list):
 
 def calc_operation(terms: list, operator: str):
     terms = [float(t) for t in terms]  # 各項をfloatに変換
-    op_type = len(terms)  # 演算子の種類 (項が一つ->単項演算子, 項が二つ->二項演算子)
+    op_type = len(terms)  # 演算の種類 (項が一つ->単項演算, 項が二つ->二項演算)
 
-    # 単項演算子の演算-----------------------------------------
+    # 単項演算-----------------------------------------
     if op_type == UNARY:
         term = terms[0]
         match operator:
@@ -166,7 +165,7 @@ def calc_operation(terms: list, operator: str):
             case _:
                 raise SyntaxError("Invalid operator : {}".format(operator))
 
-    # 二項演算子の演算-------------------------------------------
+    # 二項演算-------------------------------------------
     elif op_type == BINARY:
         match operator:
             case "+":
@@ -188,3 +187,12 @@ def calc_operation(terms: list, operator: str):
     # ---------------------------------------------------------------
     else:
         raise SyntaxError
+
+
+if __name__ == '__main__':
+
+    print("load ymx file by OmegaConf and parse")
+    p = "./example.ymx"
+    d = OmegaConf.load(p)
+    d = parse(d)
+    print(d)

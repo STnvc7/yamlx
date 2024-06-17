@@ -61,10 +61,3 @@ if __name__ == "__main__":
     p = "./example.ymx"
     d = load(p)
     print(d)
-
-    print("------------------------------")
-    print("load ymx file by OmegaConf and parse")
-    from omegaconf import OmegaConf
-    d = OmegaConf.load(p)
-    d = parse(d)
-    print(d)
