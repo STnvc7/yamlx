@@ -1,6 +1,6 @@
 [project]
 name = "yamlx"
-version = "0.0.1"
+version = "0.0.2"
 description = "Allow variable and expression in YAML file"
 authors = [
     { name = "hiroh", email = "hirohata0116@gmail.com" }
