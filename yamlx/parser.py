@@ -54,22 +54,18 @@ def parse(input_dict):
         new_dict = {}
 
         for k, v in target_value.items():
-
             # ネストしているとき-------------------------
             if type(v) in DICT_TYPES:
                 new_dict[k] = parse_dict_recursive(original_dict, v)
                 continue
-
             # 式や変数が含まれているとき------------------
             if has_expression(v):
                 new_dict[k] = parse_expression(original_dict, v)
                 continue
-
             # ---------------------------------------
             new_dict[k] = v
 
         return new_dict
-
     # -----------------------------------------------------------------------
     parsed_data = parse_dict_recursive(input_dict, input_dict)
 
@@ -80,13 +76,17 @@ def has_expression(value: any):
     """
     受け取ったvalueに変数や式が含まれているか判定
     valueがstr以外 -> False
-    valueがstr     -> $かスペースが含まれていたら True
+    valueがstr     -> $か演算子が含まれていたら True /はパスの可能性もあるので演算子の場合だけTrue
     """
+    ops = ["+", "-", "*", "//", "**", "$"]
 
     if type(value) != str:
         return False
-    if re.search(r".*[{}|\$].*".format('|'.join(OPERATORS)), value):
+    if any(op in value for op in ops):
         return True
+    if '/' in value:
+        slash_sep_list = value.split('/')
+        return all([s.isdecimal() for s in slash_sep_list])
     else:
         return False
 

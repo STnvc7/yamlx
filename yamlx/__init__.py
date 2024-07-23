@@ -1,7 +1,7 @@
 import yaml
 import os
 
-from parser import parse
+from yamlx.parser import parse
 
 def load(path: str):
     """
