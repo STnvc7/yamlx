@@ -133,7 +133,7 @@ def calc_expression(original_dict: dict, expr: list):
         # 項が式であるとき -> 再帰で計算----------
         if type(term) == list:
             term = calc_expression(original_dict, term)
-
+        
         # ------------------------------------
         terms.append(term)
 
@@ -151,7 +151,7 @@ def get_value_from_key_list(data: dict, k_list: list):
 
 
 def calc_operation(terms: list, operator: str):
-    terms = [float(t) for t in terms]  # 各項をfloatに変換
+    terms = [eval(t) if type(t) is str else t for t in terms]  # 各項を数値に変換
     op_type = len(terms)  # 演算の種類 (項が一つ->単項演算, 項が二つ->二項演算)
 
     # 単項演算-----------------------------------------

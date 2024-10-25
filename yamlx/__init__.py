@@ -57,7 +57,7 @@ def load(path: str):
 
 if __name__ == "__main__":
 
-    print("load ymx file")
-    p = "./example.ymx"
+    print("load yaml file")
+    p = "./example.yaml"
     d = load(p)
     print(d)

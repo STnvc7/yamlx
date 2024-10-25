@@ -15,7 +15,7 @@ yaml内で変数や計算式を扱えるようにしたもの
 計算式を入れたいとき -> 普通に演算子を用いて書いてください(+,-,\*,/,%,//,\*\*)が使えます．\${...}も使えます．
 
 ```
-# example.ymx
+# example.yaml
 
 train :
   batch_size    : 16
@@ -37,7 +37,7 @@ model :
 
 ```
 >> import yamlx
->> path = "./example.ymx"
+>> path = "./example.yaml"
 >> data = yamlx.load(path)
 >> print(data)
 >> {'train': {'batch_size': 16, 'learning_rate': 0.001, 'epochs': 50}, 'signal': {'sample_rate': 16000, 'hop_size': 256, 'n_mels': 80, 'eps': 0.01, 'max_len': 62.0}, 'model': {'input_dim': 128, 'input_channel': 80, 'output_channel': 5}}  
