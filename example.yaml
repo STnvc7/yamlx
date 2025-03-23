@@ -1,5 +1,7 @@
-path : 
-  input : /Users/usr/Downloads
+path :
+  root: /path/to/root 
+  input : /path/to/input
+  output: ${path.root}/output
 
 train :
   batch_size    : 16

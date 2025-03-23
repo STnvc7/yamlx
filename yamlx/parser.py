@@ -3,13 +3,13 @@ import pyparsing
 from omegaconf import DictConfig, OmegaConf
 
 from pyparsing import Word, Keyword, Suppress, Group, ZeroOrMore, Regex
-from pyparsing import alphanums, infix_notation, oneOf, opAssoc
+from pyparsing import alphanums, infixNotation, oneOf, opAssoc, ParseResults
 
 #パース可能な辞書型
 DICT_TYPES = [dict, DictConfig]
 
 # 計算可能な演算子
-OPERATORS = ["+", "-", "*", "/", "//", "**"]
+OPERATORS = ["+", "-", "*", "/", "//", "%", "**"]
 
 # 単項演算，二項演算
 UNARY, BINARY = 1, 2
@@ -26,14 +26,23 @@ ident = Word(alphanums + "-" + "_")
 number = Regex(r"\d+(\.\d*)?([eE][+-]?\d+)?")
 
 variable = Group(VAR + LBRACE + ident + ZeroOrMore(POINT + ident) + RBRACE)
-factor = variable | number
+factor = variable | number | ident
 
-expression = infix_notation(
+def nest_action(tokens):
+    tokens = tokens[0].asList()
+    result = tokens[0]
+
+    for i in range(1, len(tokens), 2):
+        result = [result, tokens[i], tokens[i + 1]]
+    return ParseResults([result])
+
+expression = infixNotation(
     factor,
     [
-        (oneOf("+ -"), UNARY, opAssoc.RIGHT),  # 符号は最優先。
-        (oneOf("* / // **"), BINARY, opAssoc.LEFT),  # 掛け算割り算は足し算引き算より優先
-        (oneOf("+ -"), BINARY, opAssoc.LEFT),
+        ("-", UNARY, opAssoc.RIGHT),  # 符号は最優先。
+        ("**", BINARY, opAssoc.RIGHT),
+        (oneOf("* / // %"), BINARY, opAssoc.LEFT, nest_action),  # 掛け算割り算は足し算引き算より優先
+        (oneOf("+ -"), BINARY, opAssoc.LEFT, nest_action),
     ],
 )
 # -----------------------------------------------------------------------------
@@ -58,37 +67,18 @@ def parse(input_dict):
             if type(v) in DICT_TYPES:
                 new_dict[k] = parse_dict_recursive(original_dict, v)
                 continue
-            # 式や変数が含まれているとき------------------
-            if has_expression(v):
-                new_dict[k] = parse_expression(original_dict, v)
+
+            if type(v) != str:
+                new_dict[k] = v
                 continue
-            # ---------------------------------------
-            new_dict[k] = v
+
+            new_dict[k] = parse_expression(original_dict, v)
 
         return new_dict
     # -----------------------------------------------------------------------
     parsed_data = parse_dict_recursive(input_dict, input_dict)
 
     return parsed_data
-
-
-def has_expression(value: any):
-    """
-    受け取ったvalueに変数や式が含まれているか判定
-    valueがstr以外 -> False
-    valueがstr     -> $か演算子が含まれていたら True /はパスの可能性もあるので演算子の場合だけTrue
-    """
-    ops = ["+", "-", "*", "//", "**", "$"]
-
-    if type(value) != str:
-        return False
-    if any(op in value for op in ops):
-        return True
-    if '/' in value:
-        slash_sep_list = value.split('/')
-        return all([s.isdecimal() for s in slash_sep_list])
-    else:
-        return False
 
 
 def parse_expression(original_dict: dict, expr: str):
@@ -98,14 +88,18 @@ def parse_expression(original_dict: dict, expr: str):
 
     try:
         # 構文解析：解析された構文木をリストとして獲得
-        parse_result = expression.parse_string(expr)[0].asList()
+        print("raw expression: ", expr, type(expr))
+        parse_result = expression.parseString(expr, parse_all=True).asList()[0]
+        print("parser result", parse_result, type(parse_result))
+        expr_result = calc_expression(original_dict, parse_result)
+        print("result: ", expr_result, "\n")
+
+        return expr_result
+
     except pyparsing.exceptions.ParseException as e:
-        raise SyntaxError(e)
+        # raise SyntaxError(e)
+        return expr
 
-    # 構文木から式を計算
-    expr_result = calc_expression(original_dict, parse_result)
-
-    return expr_result
 
 
 def calc_expression(original_dict: dict, expr: list):
@@ -151,19 +145,27 @@ def get_value_from_key_list(data: dict, k_list: list):
 
 
 def calc_operation(terms: list, operator: str):
-    terms = [eval(t) if type(t) is str else t for t in terms]  # 各項を数値に変換
+    print(terms, operator)
+    # 数値の文字列を数値に変換
+    for i in range(len(terms)):
+        if type(terms[i]) == str:
+            if terms[i].isdigit() == True:
+                terms[i] = eval(terms[i])
+
+    # 文字列が含まれていたら全て結合して返す
+    if any([type(t) == str for t in terms]):
+        terms = [str(t) for t in terms]
+        return operator.join(terms)
+
     op_type = len(terms)  # 演算の種類 (項が一つ->単項演算, 項が二つ->二項演算)
 
     # 単項演算-----------------------------------------
     if op_type == UNARY:
         term = terms[0]
-        match operator:
-            case "+":
-                return term
-            case "-":
-                return -term
-            case _:
-                raise SyntaxError("Invalid operator : {}".format(operator))
+        if operator == "-":
+            return -term
+        else:
+            raise SyntaxError("Invalid operator : {}".format(operator))
 
     # 二項演算-------------------------------------------
     elif op_type == BINARY:
